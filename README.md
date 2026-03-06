@@ -18,7 +18,7 @@ Um aplicativo premium de controle financeiro pessoal com Modo Dark, gráficos in
 
 ## 📦 Como rodar este projeto
 1. Clone o repositório.
-2. Abra o arquivo `index.html` em seu navegador.
+2. Siga as instruções no [deploy_guide.md](deploy_guide.md) para configurar o Supabase e o deploy.
 
 ---
 *Desenvolvido com foco em estética moderna e usabilidade premium.*

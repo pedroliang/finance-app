@@ -83,7 +83,7 @@ function initElements() {
 
 let isLoginMode = true;
 
-// Lógica de Autenticação
+// Lógica de Autenticação com Supabase
 function setupAuth() {
     elements.linkSwitchAuth.addEventListener('click', (e) => {
         e.preventDefault();
@@ -96,74 +96,65 @@ function setupAuth() {
             'Não tem uma conta? <a href="#" id="link-switch-auth">Cadastre-se</a>' :
             'Já tem uma conta? <a href="#" id="link-switch-auth">Entrar</a>';
 
-        // Readicionar listener ao novo link
         document.getElementById('link-switch-auth').addEventListener('click', (e) => {
             e.preventDefault();
             elements.linkSwitchAuth.click();
         });
     });
 
-    elements.authForm.addEventListener('submit', (e) => {
+    elements.authForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const email = elements.authEmail.value;
         const password = elements.authPass.value;
 
         if (isLoginMode) {
-            const user = users.find(u => u.email === email && u.password === password);
-            if (user) {
-                login(user);
-            } else {
-                alert('E-mail ou senha incorretos.');
-            }
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) alert('Erro no login: ' + error.message);
+            else login(data.user);
         } else {
-            if (users.find(u => u.email === email)) {
-                alert('Este e-mail já está cadastrado.');
-                return;
-            }
-            const newUser = {
-                id: Date.now().toString(),
+            const { data, error } = await supabase.auth.signUp({
                 email,
                 password,
-                name: email.split('@')[0]
-            };
-            users.push(newUser);
-            localStorage.setItem('users', JSON.stringify(users));
-            alert('Conta criada com sucesso! Agora faça login.');
-            isLoginMode = true;
-            elements.linkSwitchAuth.click();
+                options: { data: { full_name: email.split('@')[0] } }
+            });
+            if (error) alert('Erro no cadastro: ' + error.message);
+            else alert('Verifique seu e-mail para confirmar o cadastro!');
         }
     });
 
     elements.btnLogout.addEventListener('click', logout);
 }
 
-function login(user) {
+async function login(user) {
     currentUser = user;
-    localStorage.setItem('currentUser', JSON.stringify(user));
     elements.authOverlay.style.display = 'none';
     elements.mainApp.style.display = 'flex';
-    elements.displayUserName.textContent = user.name;
+    elements.displayUserName.textContent = user.user_metadata?.full_name || user.email;
 
-    // Carregar transações do usuário
-    loadUserTransactions();
+    await loadUserTransactions();
     updateUI();
     lucide.createIcons();
 }
 
-function logout() {
+async function logout() {
+    await supabase.auth.signOut();
     currentUser = null;
-    localStorage.removeItem('currentUser');
     window.location.reload();
 }
 
-function loadUserTransactions() {
-    const allTransactions = JSON.parse(localStorage.getItem('transactions')) || [];
-    transactions = allTransactions.filter(t => t.userId === currentUser.id);
+async function loadUserTransactions() {
+    const { data, error } = await supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false });
+
+    if (error) console.error('Erro ao carregar transações:', error.message);
+    else transactions = data;
 }
 
 // Inicialização
 initTheme();
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     initElements();
     setupAuth();
     updateThemeUI(htmlElement.getAttribute('data-theme'));
@@ -181,8 +172,9 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    if (currentUser) {
-        login(currentUser);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+        login(user);
     } else {
         elements.authOverlay.style.display = 'flex';
         elements.mainApp.style.display = 'none';
@@ -414,13 +406,12 @@ elements.btnsNew.forEach(btn => {
 
 elements.btnClose.addEventListener('click', () => elements.modal.style.display = 'none');
 
-elements.form.addEventListener('submit', (e) => {
+elements.form.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const id = elements.form.dataset.editId || Date.now().toString();
-    const newTransaction = {
-        id,
-        userId: currentUser.id,
+    const id = elements.form.dataset.editId;
+    const transactionData = {
+        user_id: currentUser.id,
         type: elements.form.querySelector('input[name="type"]:checked').value,
         value: parseFloat(document.getElementById('val').value),
         category: document.getElementById('category').value,
@@ -429,14 +420,17 @@ elements.form.addEventListener('submit', (e) => {
         recurrence: document.getElementById('recurrence').value
     };
 
-    if (elements.form.dataset.editId) {
-        transactions = transactions.map(t => t.id === id ? newTransaction : t);
+    if (id) {
+        const { error } = await supabase.from('transactions').update(transactionData).eq('id', id);
+        if (error) alert('Erro ao atualizar: ' + error.message);
         delete elements.form.dataset.editId;
     } else {
-        transactions.push(newTransaction);
+        const { error } = await supabase.from('transactions').insert([transactionData]);
+        if (error) alert('Erro ao salvar: ' + error.message);
     }
 
-    saveAndRefresh();
+    await loadUserTransactions();
+    updateUI();
     elements.modal.style.display = 'none';
 });
 
@@ -486,10 +480,14 @@ function applyFilters() {
 }
 
 // Ações
-window.deleteTransaction = (id) => {
+window.deleteTransaction = async (id) => {
     if (confirm('Deseja realmente excluir esta movimentação?')) {
-        transactions = transactions.filter(t => t.id !== id);
-        saveAndRefresh();
+        const { error } = await supabase.from('transactions').delete().eq('id', id);
+        if (error) alert('Erro ao excluir: ' + error.message);
+        else {
+            await loadUserTransactions();
+            updateUI();
+        }
     }
 };
 
