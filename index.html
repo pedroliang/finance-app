@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinanSmart - Seu Controle Financeiro Moderno</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Fontes -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Ícones -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+    <!-- Auth Overlay -->
+    <div id="auth-overlay" class="auth-overlay">
+        <div class="auth-card">
+            <div class="auth-header">
+                <i data-lucide="wallet" class="auth-logo"></i>
+                <h2 id="auth-title">Bem-vindo ao FinanSmart</h2>
+                <p id="auth-subtitle">Entre na sua conta para continuar</p>
+            </div>
+            <form id="auth-form">
+                <div class="input-field">
+                    <label for="auth-email">E-mail</label>
+                    <input type="email" id="auth-email" required placeholder="seu@email.com">
+                </div>
+                <div class="input-field">
+                    <label for="auth-password">Senha</label>
+                    <input type="password" id="auth-password" required placeholder="••••••••">
+                </div>
+                <button type="submit" id="btn-auth-submit" class="btn-submit">Entrar</button>
+            </form>
+            <div class="auth-footer">
+                <p id="auth-switch-text">Não tem uma conta? <a href="#" id="link-switch-auth">Cadastre-se</a></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="app-container" id="main-app" style="display: none;">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <i data-lucide="wallet"></i>
+                <span>FinanSmart</span>
+            </div>
+            <div class="user-profile" id="user-profile">
+                <div class="avatar">
+                    <i data-lucide="user"></i>
+                </div>
+                <div class="user-info">
+                    <span id="display-user-name">Usuário</span>
+                    <button id="btn-logout" title="Sair">Sair <i data-lucide="log-out"></i></button>
+                </div>
+            </div>
+            <nav>
+                <button class="nav-item active" id="btn-dashboard">
+                    <i data-lucide="layout-dashboard"></i>
+                    Dashboard
+                </button>
+                <button class="nav-item" id="btn-transactions">
+                    <i data-lucide="arrow-left-right"></i>
+                    Extrato
+                </button>
+                <div class="theme-toggle-container"
+                    style="margin-top: auto; padding-top: 2rem; border-top: 1px solid var(--border);">
+                    <button id="theme-toggle" class="nav-item" title="Alternar tema">
+                        <i data-lucide="moon" id="theme-icon"></i>
+                        <span>Modo Escuro</span>
+                    </button>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-info">
+                    <h1 id="view-title">Dashboard</h1>
+                    <p id="view-subtitle">Aqui está o resumo das suas finanças.</p>
+                </div>
+                <div class="date-display" id="current-date">
+                    Data de hoje
+                </div>
+            </header>
+
+            <!-- Dashboard View -->
+            <div id="view-dashboard" class="app-view">
+                <!-- Dashboard Summary -->
+                <section class="summary-cards">
+                    <div class="card balance">
+                        <div class="card-header">
+                            <span>Saldo Total</span>
+                            <div class="icon-circle primary">
+                                <i data-lucide="banknote"></i>
+                            </div>
+                        </div>
+                        <h2 id="total-balance">R$ 0,00</h2>
+                    </div>
+                    <div class="card income">
+                        <div class="card-header">
+                            <span>Entradas</span>
+                            <div class="icon-circle success">
+                                <i data-lucide="trending-up"></i>
+                            </div>
+                        </div>
+                        <h2 id="total-income">R$ 0,00</h2>
+                    </div>
+                    <div class="card expenses">
+                        <div class="card-header">
+                            <span>Saídas</span>
+                            <div class="icon-circle danger">
+                                <i data-lucide="trending-down"></i>
+                            </div>
+                        </div>
+                        <h2 id="total-expense">R$ 0,00</h2>
+                    </div>
+                    <div class="card result">
+                        <div class="card-header">
+                            <span>Resultado</span>
+                            <div class="icon-circle info">
+                                <i data-lucide="pie-chart"></i>
+                            </div>
+                        </div>
+                        <h2 id="net-result">R$ 0,00</h2>
+                    </div>
+                </section>
+
+                <!-- Filters & Actions (Small version for Dashboard) -->
+                <section class="actions-bar">
+                    <div class="filters">
+                        <button class="filter-btn active" data-period="all">Tudo</button>
+                        <button class="filter-btn" data-period="today">Hoje</button>
+                        <button class="filter-btn" data-period="week">7 Dias</button>
+                        <button class="filter-btn" data-period="month">Mês</button>
+                    </div>
+                    <button class="btn-primary btn-new-transaction">
+                        <i data-lucide="plus"></i>
+                        Nova Movimentação
+                    </button>
+                </section>
+
+                <!-- Charts Section -->
+                <section class="charts-container">
+                    <div class="card chart-card">
+                        <h3>Evolução Diária</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="evolutionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="card chart-card">
+                        <h3>Gastos por Categoria</h3>
+                        <div class="chart-wrapper">
+                            <canvas id="categoryChart"></canvas>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Transactions View (Extrato) -->
+            <div id="view-transactions" class="app-view" style="display: none;">
+                <section class="actions-bar">
+                    <div class="filters">
+                        <div class="custom-date-filter">
+                            <input type="date" id="date-start">
+                            <span>até</span>
+                            <input type="date" id="date-end">
+                        </div>
+                        <select id="filter-category" class="select-filter">
+                            <option value="all">Todas Categorias</option>
+                            <option value="Alimentação">Alimentação</option>
+                            <option value="Transporte">Transporte</option>
+                            <option value="Aluguel">Aluguel</option>
+                            <option value="Lazer">Lazer</option>
+                            <option value="Saúde">Saúde</option>
+                            <option value="Educação">Educação</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                    <button class="btn-primary btn-new-transaction">
+                        <i data-lucide="plus"></i>
+                        Nova Movimentação
+                    </button>
+                </section>
+
+                <section class="transactions-section">
+                    <div class="section-header">
+                        <h3>Extrato Completo</h3>
+                        <div class="search-box">
+                            <i data-lucide="search"></i>
+                            <input type="text" id="search-desc" placeholder="Buscar por descrição...">
+                        </div>
+                    </div>
+                    <div class="table-container">
+                        <table id="transactions-table">
+                            <thead>
+                                <tr>
+                                    <th>Data</th>
+                                    <th>Tipo</th>
+                                    <th>Categoria</th>
+                                    <th>Descrição</th>
+                                    <th>Valor</th>
+                                    <th>Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody id="transactions-body">
+                                <!-- Inserido via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Form -->
+    <div id="modal-transaction" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Nova Movimentação</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <form id="transaction-form">
+                <div class="input-group">
+                    <label>Tipo</label>
+                    <div class="type-selector">
+                        <label class="type-option income">
+                            <input type="radio" name="type" value="income" checked>
+                            <span>Entrada</span>
+                        </label>
+                        <label class="type-option expense">
+                            <input type="radio" name="type" value="expense">
+                            <span>Saída</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="grid-form">
+                    <div class="input-field">
+                        <label for="val">Valor</label>
+                        <input type="number" id="val" step="0.01" required placeholder="0,00">
+                    </div>
+                    <div class="input-field">
+                        <label for="category">Categoria</label>
+                        <select id="category" required>
+                            <option value="Alimentação">Alimentação</option>
+                            <option value="Transporte">Transporte</option>
+                            <option value="Aluguel">Aluguel</option>
+                            <option value="Lazer">Lazer</option>
+                            <option value="Saúde">Saúde</option>
+                            <option value="Educação">Educação</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="input-field">
+                    <label for="description">Descrição</label>
+                    <input type="text" id="description" required placeholder="Ex: Salário, Supermercado...">
+                </div>
+                <div class="grid-form">
+                    <div class="input-field">
+                        <label for="date">Data</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <div class="input-field">
+                        <label for="recurrence">Recorrência</label>
+                        <select id="recurrence">
+                            <option value="none">Nenhuma</option>
+                            <option value="weekly">Semanal</option>
+                            <option value="monthly">Mensal</option>
+                        </select>
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Salvar Movimentação</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
