@@ -1,6 +1,6 @@
 // Configuração do Supabase (Substitua pelos seus dados do projeto)
 const SUPABASE_URL = 'https://omwwelphmiaandhkqoih.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_9qRWX_PtXnv3eikUKL_tog_YwlzP9FzDndD'; // Chave anon pública
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9td3dlbHBobWlhYW5kaGtxb2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MDU4NDYsImV4cCI6MjA4ODM4MTg0Nn0.GvQSWRejrdPA4rzDUwZAiSQeUjGLD3QRpXIZl7iKAyg';
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Gerenciamento de Tema (Dark Mode) - REUTILIZADO
