@@ -27,18 +27,22 @@ ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para transações
+DROP POLICY IF EXISTS "Usuários podem ver suas próprias transações" ON public.transactions;
 CREATE POLICY "Usuários podem ver suas próprias transações" 
 ON public.transactions FOR SELECT 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Usuários podem inserir suas próprias transações" ON public.transactions;
 CREATE POLICY "Usuários podem inserir suas próprias transações" 
 ON public.transactions FOR INSERT 
 WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Usuários podem atualizar suas próprias transações" ON public.transactions;
 CREATE POLICY "Usuários podem atualizar suas próprias transações" 
 ON public.transactions FOR UPDATE 
 USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Usuários podem deletar suas próprias transações" ON public.transactions;
 CREATE POLICY "Usuários podem deletar suas próprias transações" 
 ON public.transactions FOR DELETE 
 USING (auth.uid() = user_id);

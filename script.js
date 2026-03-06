@@ -1,6 +1,6 @@
 // Configuração do Supabase (Substitua pelos seus dados do projeto)
-const SUPABASE_URL = 'SUA_SUPABASE_URL_AQUI';
-const SUPABASE_ANON_KEY = 'SUA_SUPABASE_ANON_KEY_AQUI';
+const SUPABASE_URL = 'https://omwwelphmiaandhkqoih.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_9qRWX_PtXnv3eikUKL_tog_YwlzP9FzDndD'; // Chave anon pública
 const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Gerenciamento de Tema (Dark Mode) - REUTILIZADO
