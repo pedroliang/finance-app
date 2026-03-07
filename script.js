@@ -155,6 +155,7 @@ async function loadUserTransactions() {
 initTheme();
 document.addEventListener('DOMContentLoaded', async () => {
     initElements();
+    initEvents();
     setupAuth();
     updateThemeUI(htmlElement.getAttribute('data-theme'));
 
@@ -394,58 +395,60 @@ function renderCategoryChart(data) {
 }
 
 // Eventos e Modal
-elements.btnsNew.forEach(btn => {
-    btn.addEventListener('click', () => {
-        elements.form.reset();
-        document.getElementById('modal-title').innerText = 'Nova Movimentação';
-        elements.modal.style.display = 'block';
-        document.getElementById('date').valueAsDate = new Date();
+function initEvents() {
+    elements.btnsNew.forEach(btn => {
+        btn.addEventListener('click', () => {
+            elements.form.reset();
+            document.getElementById('modal-title').innerText = 'Nova Movimentação';
+            elements.modal.style.display = 'block';
+            document.getElementById('date').valueAsDate = new Date();
+        });
     });
-});
 
-elements.btnClose.addEventListener('click', () => elements.modal.style.display = 'none');
+    elements.btnClose.addEventListener('click', () => elements.modal.style.display = 'none');
 
-elements.form.addEventListener('submit', async (e) => {
-    e.preventDefault();
+    elements.form.addEventListener('submit', async (e) => {
+        e.preventDefault();
 
-    const id = elements.form.dataset.editId;
-    const transactionData = {
-        user_id: currentUser.id,
-        type: elements.form.querySelector('input[name="type"]:checked').value,
-        value: parseFloat(document.getElementById('val').value),
-        category: document.getElementById('category').value,
-        description: document.getElementById('description').value,
-        date: document.getElementById('date').value,
-        recurrence: document.getElementById('recurrence').value
-    };
+        const id = elements.form.dataset.editId;
+        const transactionData = {
+            user_id: currentUser.id,
+            type: elements.form.querySelector('input[name="type"]:checked').value,
+            value: parseFloat(document.getElementById('val').value),
+            category: document.getElementById('category').value,
+            description: document.getElementById('description').value,
+            date: document.getElementById('date').value,
+            recurrence: document.getElementById('recurrence').value
+        };
 
-    if (id) {
-        const { error } = await supabaseClient.from('transactions').update(transactionData).eq('id', id);
-        if (error) alert('Erro ao atualizar: ' + error.message);
-        delete elements.form.dataset.editId;
-    } else {
-        const { error } = await supabaseClient.from('transactions').insert([transactionData]);
-        if (error) alert('Erro ao salvar: ' + error.message);
-    }
+        if (id) {
+            const { error } = await supabaseClient.from('transactions').update(transactionData).eq('id', id);
+            if (error) alert('Erro ao atualizar: ' + error.message);
+            delete elements.form.dataset.editId;
+        } else {
+            const { error } = await supabaseClient.from('transactions').insert([transactionData]);
+            if (error) alert('Erro ao salvar: ' + error.message);
+        }
 
-    await loadUserTransactions();
-    updateUI();
-    elements.modal.style.display = 'none';
-});
-
-// Filtros
-elements.filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-        elements.filterBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        applyFilters();
+        await loadUserTransactions();
+        updateUI();
+        elements.modal.style.display = 'none';
     });
-});
 
-elements.search.addEventListener('input', applyFilters);
-[elements.dateStart, elements.dateEnd, elements.filterCategory].forEach(input => {
-    if (input) input.addEventListener('change', applyFilters);
-});
+    // Filtros
+    elements.filterBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            elements.filterBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            applyFilters();
+        });
+    });
+
+    elements.search.addEventListener('input', applyFilters);
+    [elements.dateStart, elements.dateEnd, elements.filterCategory].forEach(input => {
+        if (input) input.addEventListener('change', applyFilters);
+    });
+}
 
 function applyFilters() {
     const now = new Date();
