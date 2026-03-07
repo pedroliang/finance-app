@@ -92,14 +92,13 @@ function setupAuth() {
         elements.authTitle.textContent = isLoginMode ? 'Bem-vindo ao FinanSmart' : 'Crie sua conta';
         elements.authSubtitle.textContent = isLoginMode ? 'Entre na sua conta para continuar' : 'Comece a organizar suas finanças hoje';
         elements.btnAuthSubmit.textContent = isLoginMode ? 'Entrar' : 'Cadastrar';
-        elements.authSwitchText.innerHTML = isLoginMode ?
-            'Não tem uma conta? <a href="#" id="link-switch-auth">Cadastre-se</a>' :
-            'Já tem uma conta? <a href="#" id="link-switch-auth">Entrar</a>';
 
-        document.getElementById('link-switch-auth').addEventListener('click', (e) => {
-            e.preventDefault();
-            elements.linkSwitchAuth.click();
-        });
+        // Atualiza apenas o texto descritivo e o link sem destruir o elemento pai
+        const switchTextNode = elements.authSwitchText.childNodes[0];
+        if (switchTextNode) {
+            switchTextNode.textContent = isLoginMode ? 'Não tem uma conta? ' : 'Já tem uma conta? ';
+        }
+        elements.linkSwitchAuth.textContent = isLoginMode ? 'Cadastre-se' : 'Entrar';
     });
 
     elements.authForm.addEventListener('submit', async (e) => {
