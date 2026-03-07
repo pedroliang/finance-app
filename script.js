@@ -396,6 +396,21 @@ function renderCategoryChart(data) {
 
 // Eventos e Modal
 function initEvents() {
+    const valInput = document.getElementById('val');
+    valInput.addEventListener('input', function (e) {
+        let value = e.target.value.replace(/\D/g, ''); // Remove tudo que não for número
+        if (value === '') {
+            e.target.value = '';
+            return;
+        }
+
+        // Converte para decimal
+        value = (parseInt(value, 10) / 100).toFixed(2);
+
+        // Formata para moeda BRL
+        e.target.value = value.replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+    });
+
     elements.btnsNew.forEach(btn => {
         btn.addEventListener('click', () => {
             elements.form.reset();
@@ -411,10 +426,13 @@ function initEvents() {
         e.preventDefault();
 
         const id = elements.form.dataset.editId;
+        // Limpa a máscara (pontos e troca vírgula por ponto para o DB)
+        let rawValString = document.getElementById('val').value.replace(/\./g, '').replace(',', '.');
+
         const transactionData = {
             user_id: currentUser.id,
             type: elements.form.querySelector('input[name="type"]:checked').value,
-            value: parseFloat(document.getElementById('val').value),
+            value: parseFloat(rawValString || 0),
             category: document.getElementById('category').value,
             description: document.getElementById('description').value,
             date: document.getElementById('date').value,
@@ -501,7 +519,13 @@ window.editTransaction = (id) => {
     document.getElementById('modal-title').innerText = 'Editar Movimentação';
 
     elements.form.querySelector(`input[name="type"][value="${t.type}"]`).checked = true;
-    document.getElementById('val').value = t.value;
+
+    // Formata o valor de volta para a máscara (ex: 1500.5 -> "1.500,50")
+    document.getElementById('val').value = parseFloat(t.value)
+        .toFixed(2)
+        .replace('.', ',')
+        .replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
     document.getElementById('category').value = t.category;
     document.getElementById('description').value = t.description;
     document.getElementById('date').value = t.date;
