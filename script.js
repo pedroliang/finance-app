@@ -1,7 +1,7 @@
 // Configuração do Supabase (Substitua pelos seus dados do projeto)
 const SUPABASE_URL = 'https://omwwelphmiaandhkqoih.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9td3dlbHBobWlhYW5kaGtxb2loIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI4MDU4NDYsImV4cCI6MjA4ODM4MTg0Nn0.GvQSWRejrdPA4rzDUwZAiSQeUjGLD3QRpXIZl7iKAyg';
-const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // Gerenciamento de Tema (Dark Mode) - REUTILIZADO
 const htmlElement = document.documentElement;
@@ -107,11 +107,11 @@ function setupAuth() {
         const password = elements.authPass.value;
 
         if (isLoginMode) {
-            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+            const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) alert('Erro no login: ' + error.message);
             else login(data.user);
         } else {
-            const { data, error } = await supabase.auth.signUp({
+            const { data, error } = await supabaseClient.auth.signUp({
                 email,
                 password,
                 options: { data: { full_name: email.split('@')[0] } }
@@ -136,13 +136,13 @@ async function login(user) {
 }
 
 async function logout() {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     currentUser = null;
     window.location.reload();
 }
 
 async function loadUserTransactions() {
-    const { data, error } = await supabase
+    const { data, error } = await supabaseClient
         .from('transactions')
         .select('*')
         .order('date', { ascending: false });
@@ -171,7 +171,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const { data: { user } } = await supabase.auth.getUser();
+    const { data: { user } } = await supabaseClient.auth.getUser();
     if (user) {
         login(user);
     } else {
@@ -420,11 +420,11 @@ elements.form.addEventListener('submit', async (e) => {
     };
 
     if (id) {
-        const { error } = await supabase.from('transactions').update(transactionData).eq('id', id);
+        const { error } = await supabaseClient.from('transactions').update(transactionData).eq('id', id);
         if (error) alert('Erro ao atualizar: ' + error.message);
         delete elements.form.dataset.editId;
     } else {
-        const { error } = await supabase.from('transactions').insert([transactionData]);
+        const { error } = await supabaseClient.from('transactions').insert([transactionData]);
         if (error) alert('Erro ao salvar: ' + error.message);
     }
 
@@ -481,7 +481,7 @@ function applyFilters() {
 // Ações
 window.deleteTransaction = async (id) => {
     if (confirm('Deseja realmente excluir esta movimentação?')) {
-        const { error } = await supabase.from('transactions').delete().eq('id', id);
+        const { error } = await supabaseClient.from('transactions').delete().eq('id', id);
         if (error) alert('Erro ao excluir: ' + error.message);
         else {
             await loadUserTransactions();
